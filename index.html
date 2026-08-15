@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PRISM: Optical Ray-Tracing Physics Lab</title>
+  <title>PRISM: Precision Optical Physics Workstation</title>
   <style>
     * {
       box-sizing: border-box;
@@ -17,22 +17,23 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #090d16;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: #08090b;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", monospace;
       display: flex;
       justify-content: center;
       align-items: center;
     }
-    #labContainer {
+    #benchChassis {
       position: relative;
       width: 100%;
       height: 100%;
       max-width: 480px;
       max-height: 940px;
-      background: #0b0f19;
+      background: #111317;
       overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 35px 90px rgba(0, 0, 0, 0.95), 0 0 0 1px #22262f;
       border-radius: 20px;
+      border: 8px solid #1c1f26;
     }
     canvas {
       width: 100%;
@@ -40,117 +41,138 @@
       display: block;
     }
 
-    /* Precision Laboratory Instrument HUD */
-    .lab-header {
+    /* Industrial Hardware Corner Bolts */
+    .bolt {
       position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #475569 0%, #1e293b 80%, #0f172a 100%);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2);
+      z-index: 12;
+      pointer-events: none;
+    }
+    .bolt-tl { top: 8px; left: 8px; }
+    .bolt-tr { top: 8px; right: 8px; }
+    .bolt-bl { bottom: 8px; left: 8px; }
+    .bolt-br { bottom: 8px; right: 8px; }
+
+    /* Precision Instrument Top HUD */
+    .instrument-bar {
+      position: absolute;
+      top: 14px;
+      left: 20px;
+      right: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       pointer-events: none;
       z-index: 10;
     }
-    .spec-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 6px 14px;
-      border-radius: 12px;
+    .gauge-module {
+      background: #181b22;
+      border: 1px solid #2b313d;
+      border-radius: 8px;
+      padding: 6px 12px;
       display: flex;
       flex-direction: column;
       gap: 2px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
     }
-    .spec-label {
-      font-size: 9px;
+    .gauge-label {
+      font-size: 8.5px;
       font-weight: 800;
       letter-spacing: 1.2px;
-      color: #64748b;
+      color: #717d91;
       text-transform: uppercase;
+      font-family: monospace;
     }
-    .spec-val {
-      font-size: 14px;
-      font-weight: 800;
-      color: #38bdf8;
+    .gauge-readout {
+      font-size: 13.5px;
+      font-weight: 900;
+      color: #ff3366;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+    }
+    .gauge-green {
+      color: #10b981;
+      text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
     }
 
-    /* Level Selector & Controls Bar */
-    .lab-footer {
+    /* Optical Bench Control Deck */
+    .deck-footer {
       position: absolute;
-      bottom: 16px;
-      left: 16px;
-      right: 16px;
+      bottom: 14px;
+      left: 20px;
+      right: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 10;
     }
-    .level-badge {
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 8px 16px;
-      border-radius: 12px;
+    .exp-tag {
+      background: #181b22;
+      border: 1px solid #2b313d;
+      padding: 7px 14px;
+      border-radius: 8px;
       color: #e2e8f0;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      font-family: monospace;
     }
-    .controls-group {
+    .deck-buttons {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
-    .lab-btn {
-      background: rgba(30, 41, 59, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+    .mech-btn {
+      background: #222631;
+      border: 1px solid #363d4c;
       color: #cbd5e1;
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: monospace;
       cursor: pointer;
-      backdrop-filter: blur(8px);
-      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: background 0.1s, transform 0.08s;
     }
-    .lab-btn:active {
-      transform: scale(0.96);
-      background: rgba(51, 65, 85, 0.9);
+    .mech-btn:active {
+      transform: translateY(1px);
+      background: #181b22;
     }
 
-    /* Level Solved Banner */
-    .solved-banner {
+    /* Circuit Locked Banner */
+    .circuit-banner {
       position: absolute;
-      top: 75px;
-      left: 16px;
-      right: 16px;
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      backdrop-filter: blur(12px);
-      border-radius: 12px;
-      padding: 10px 16px;
+      top: 68px;
+      left: 20px;
+      right: 20px;
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid #10b981;
+      border-radius: 10px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: #34d399;
-      font-weight: 800;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-      z-index: 15;
-      transition: opacity 0.3s, transform 0.3s;
-    }
-    .next-btn {
-      background: #10b981;
-      color: #064e3b;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 11px;
+      color: #10b981;
       font-weight: 900;
+      font-size: 12px;
+      letter-spacing: 0.8px;
+      font-family: monospace;
+      z-index: 15;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+    .circuit-btn {
+      background: #10b981;
+      color: #06281e;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
       letter-spacing: 0.5px;
       cursor: pointer;
     }
@@ -163,130 +185,128 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: rgba(11, 15, 25, 0.92);
-      backdrop-filter: blur(18px);
-      padding: 32px;
+      background: rgba(14, 16, 21, 0.94);
+      backdrop-filter: blur(20px);
+      padding: 30px;
       text-align: center;
-      z-index: 25;
+      z-index: 30;
     }
     .hidden {
       display: none !important;
     }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      padding: 5px 14px;
-      border-radius: 999px;
-      color: #38bdf8;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      margin-bottom: 12px;
+    .lab-serial {
+      color: #ff3366;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      font-family: monospace;
+      margin-bottom: 8px;
     }
     .title {
-      font-size: 32px;
+      font-size: 28px;
       font-weight: 900;
       color: #ffffff;
-      letter-spacing: -0.5px;
+      letter-spacing: 0.5px;
       line-height: 1.15;
-      margin-bottom: 12px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      margin-bottom: 10px;
     }
     .desc {
       color: #94a3b8;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 24px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      margin-bottom: 22px;
       max-width: 320px;
     }
-    .feature-list {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 14px 18px;
-      margin-bottom: 26px;
+    .specs-panel {
+      background: #161820;
+      border: 1px solid #2b303d;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
       text-align: left;
       width: 100%;
-      max-width: 330px;
-      font-size: 12px;
+      max-width: 320px;
+      font-size: 11.5px;
       color: #cbd5e1;
-      line-height: 1.5;
+      font-family: monospace;
+      line-height: 1.6;
     }
-    .feature-list div {
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .specs-panel span {
+      color: #ff3366;
+      font-weight: bold;
     }
-    .feature-list div:last-child {
-      margin-bottom: 0;
-    }
-    .btn-enter {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
+    .btn-engage {
+      background: #ff3366;
       color: #ffffff;
       border: none;
-      padding: 16px 42px;
-      border-radius: 14px;
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: 0.8px;
+      padding: 14px 38px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      font-family: monospace;
       cursor: pointer;
-      box-shadow: 0 0 30px rgba(37, 99, 235, 0.4);
-      transition: transform 0.12s;
+      box-shadow: 0 0 25px rgba(255, 51, 102, 0.4);
+      transition: transform 0.1s, background 0.1s;
     }
-    .btn-enter:active {
+    .btn-engage:active {
       transform: scale(0.97);
+      background: #e62052;
     }
   </style>
 </head>
 <body>
-  <div id="labContainer">
+  <div id="benchChassis">
+    <!-- Corner Hardware Bolts -->
+    <div class="bolt bolt-tl"></div>
+    <div class="bolt bolt-tr"></div>
+    <div class="bolt bolt-bl"></div>
+    <div class="bolt bolt-br"></div>
+
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Lab Instrument Top Readout -->
-    <div class="lab-header">
-      <div class="spec-card">
-        <span class="spec-label">RAY REFLECTIONS</span>
-        <span class="spec-val" id="bounceCount">0 Bounces</span>
+    <!-- Top Scientific Gauges -->
+    <div class="instrument-bar">
+      <div class="gauge-module">
+        <span class="gauge-label">RAY SPECULAR BOUNCES</span>
+        <span class="gauge-readout" id="bounceCount">0 BOUNCES</span>
       </div>
-      <div class="spec-card">
-        <span class="spec-label">CIRCUIT FLUX</span>
-        <span class="spec-val" id="fluxPercent">0%</span>
+      <div class="gauge-module">
+        <span class="gauge-label">RECEPTOR FLUX</span>
+        <span class="gauge-readout gauge-green" id="fluxPercent">0%</span>
       </div>
     </div>
 
-    <!-- Level Solved Notification -->
-    <div class="solved-banner hidden" id="solvedBanner">
-      <span>✨ OPTICAL CIRCUIT LOCKED!</span>
-      <button class="next-btn" id="nextLevelBtn">NEXT EXPERIMENT →</button>
+    <!-- Circuit Complete Notification -->
+    <div class="circuit-banner hidden" id="solvedBanner">
+      <span>⚡ OPTICAL CIRCUIT LOCKED!</span>
+      <button class="circuit-btn" id="nextLevelBtn">NEXT EXPERIMENT →</button>
     </div>
 
-    <!-- Lab Footer Navigation -->
-    <div class="lab-footer">
-      <div class="level-badge" id="levelName">EXP 1: SNELL'S ANGLE</div>
-      <div class="controls-group">
-        <button class="lab-btn" id="prevBtn">‹</button>
-        <button class="lab-btn" id="resetBtn">RESET</button>
-        <button class="lab-btn" id="nextBtn">›</button>
+    <!-- Bottom Deck Controls -->
+    <div class="deck-footer">
+      <div class="exp-tag" id="levelName">EXP 1: SNELL'S ANGLE</div>
+      <div class="deck-buttons">
+        <button class="mech-btn" id="prevBtn">‹</button>
+        <button class="mech-btn" id="resetBtn">RESET</button>
+        <button class="mech-btn" id="nextBtn">›</button>
       </div>
     </div>
 
     <!-- Start / Introduction Overlay -->
     <div class="overlay" id="startOverlay">
-      <div class="pill">🔬 OPTICAL PHYSICS ENGINE</div>
-      <h1 class="title">PRISM: RAY-TRACING</h1>
-      <p class="desc">A realistic optical vector simulation. Guide high-power lasers through mirrors, beam splitters, and prisms to excite photonic receptors.</p>
+      <div class="lab-serial">HE-NE LASER 632.8 NM // OPT-BENCH</div>
+      <h1 class="title">PRISM: RAY-TRACING LAB</h1>
+      <p class="desc">A precision optical physics bench. Rotate silvered mirrors to reflect the high-intensity laser into photodiode receptors.</p>
       
-      <div class="feature-list">
-        <div><span>📐</span> <b>Vector Law of Reflection:</b> Real angle calculation.</div>
-        <div><span>🔄</span> <b>Touch & Rotate:</b> Drag circular rings to adjust mirror angles.</div>
-        <div><span>⚡</span> <b>Multi-Bounce Optics:</b> Real-time photonic raymarching.</div>
+      <div class="specs-panel">
+        <div>• <span>PHYSICS:</span> Vector reflection &theta;1 = &theta;2</div>
+        <div>• <span>CONTROLS:</span> Touch & drag mirror mounts to rotate</div>
+        <div>• <span>CIRCUIT:</span> Reach 100% photodiode excitation</div>
       </div>
 
-      <button class="btn-enter" id="enterLabBtn">ENTER LABORATORY</button>
+      <button class="btn-engage" id="enterLabBtn">ENGAGE LASER BENCH</button>
     </div>
   </div>
 
@@ -317,7 +337,7 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // Web Audio Synthesizer: Resonant Glass & Harmonic Chimes
+    // Web Audio Synthesizer: Resonant Glass & Physical Click
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let actx = null;
 
@@ -326,14 +346,14 @@
       if (actx.state === 'suspended') actx.resume();
     }
 
-    function playChime(freq, dur = 0.4) {
+    function playTone(freq, dur = 0.35, type = 'sine', vol = 0.2) {
       if (!actx) return;
       try {
         const osc = actx.createOscillator();
         const gain = actx.createGain();
-        osc.type = 'sine';
+        osc.type = type;
         osc.frequency.setValueAtTime(freq, actx.currentTime);
-        gain.gain.setValueAtTime(0.18, actx.currentTime);
+        gain.gain.setValueAtTime(vol, actx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
         osc.connect(gain);
         gain.connect(actx.destination);
@@ -343,15 +363,15 @@
     }
 
     function soundComplete() {
-      [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
-        setTimeout(() => playChime(f, 0.6), i * 110);
+      [440, 554.37, 659.25, 880].forEach((f, i) => {
+        setTimeout(() => playTone(f, 0.5, 'triangle', 0.25), i * 90);
       });
     }
 
-    // Geometry Helpers: Line segment intersection & Vector reflection
+    // Parametric line segment intersection (x1, y1)-(x2, y2) and (x3, y3)-(x4, y4)
     function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
       const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-      if (Math.abs(denom) < 0.0001) return null; // parallel
+      if (Math.abs(denom) < 0.0001) return null;
 
       const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
       const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
@@ -366,48 +386,48 @@
       return null;
     }
 
-    // Level Definitions (Progressive Optical Puzzles)
+    // Optical Levels
     let currentLevelIndex = 0;
     const levels = [
       {
-        name: "EXP 1: REFLECTION ANGLE",
-        laser: { x: 50, y: 140, angle: 0, color: "#38bdf8" },
+        name: "EXP 1: SNELL'S ANGLE",
+        laser: { x: 50, y: 150, angle: 0 },
         mirrors: [
-          { x: 280, y: 140, angle: Math.PI * 0.75, length: 70 },
-          { x: 280, y: 460, angle: Math.PI * 0.25, length: 70 }
+          { x: 280, y: 150, angle: Math.PI * 0.75, length: 72 },
+          { x: 280, y: 450, angle: Math.PI * 0.25, length: 72 }
         ],
         receptors: [
-          { x: 70, y: 460, radius: 22, requiredColor: "#38bdf8", charged: 0 }
+          { x: 80, y: 450, radius: 24, charged: 0 }
         ],
         barriers: []
       },
       {
-        name: "EXP 2: OBSTACLE BYPASS",
-        laser: { x: 60, y: 130, angle: 0, color: "#38bdf8" },
+        name: "EXP 2: TUNGSTEN SHIELD",
+        laser: { x: 60, y: 140, angle: 0 },
         mirrors: [
-          { x: 290, y: 130, angle: Math.PI * 0.75, length: 65 },
-          { x: 290, y: 320, angle: Math.PI * 0.25, length: 65 },
-          { x: 100, y: 320, angle: Math.PI * 0.75, length: 65 },
-          { x: 100, y: 520, angle: Math.PI * 0.25, length: 65 }
+          { x: 290, y: 140, angle: Math.PI * 0.75, length: 66 },
+          { x: 290, y: 320, angle: Math.PI * 0.25, length: 66 },
+          { x: 100, y: 320, angle: Math.PI * 0.75, length: 66 },
+          { x: 100, y: 510, angle: Math.PI * 0.25, length: 66 }
         ],
         receptors: [
-          { x: 280, y: 520, radius: 22, requiredColor: "#38bdf8", charged: 0 }
+          { x: 280, y: 510, radius: 24, charged: 0 }
         ],
         barriers: [
           { x1: 180, y1: 200, x2: 180, y2: 440 }
         ]
       },
       {
-        name: "EXP 3: DUAL RESONANCE",
-        laser: { x: 60, y: 180, angle: 0.15, color: "#38bdf8" },
+        name: "EXP 3: DUAL FLUX MATRIX",
+        laser: { x: 60, y: 180, angle: 0.12 },
         mirrors: [
-          { x: 280, y: 220, angle: 2.1, length: 75 },
-          { x: 160, y: 380, angle: 0.7, length: 75 },
-          { x: 290, y: 480, angle: 2.3, length: 75 }
+          { x: 280, y: 220, angle: 2.1, length: 74 },
+          { x: 160, y: 380, angle: 0.7, length: 74 },
+          { x: 290, y: 480, angle: 2.3, length: 74 }
         ],
         receptors: [
-          { x: 70, y: 320, radius: 22, requiredColor: "#38bdf8", charged: 0 },
-          { x: 80, y: 540, radius: 22, requiredColor: "#38bdf8", charged: 0 }
+          { x: 70, y: 330, radius: 24, charged: 0 },
+          { x: 80, y: 530, radius: 24, charged: 0 }
         ],
         barriers: [
           { x1: 20, y1: 420, x2: 120, y2: 420 }
@@ -429,7 +449,6 @@
       solvedBanner.classList.add('hidden');
       isSolved = false;
 
-      // Deep copy level objects
       currentLevel = {
         name: def.name,
         laser: { ...def.laser },
@@ -439,7 +458,7 @@
       };
     }
 
-    // Touch & Pointer Interaction: Rotate mirrors via intuitive radial gizmo
+    // Touch & Pointer interaction
     function getPointerPos(e) {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -458,13 +477,11 @@
       selectedMirror = null;
       for (let m of currentLevel.mirrors) {
         const d = Math.hypot(m.x - pos.x, m.y - pos.y);
-        if (d < 45) { // Touch target radius
+        if (d < 50) {
           selectedMirror = m;
           isRotating = true;
-          // Calculate initial angle to pointer
-          const ang = Math.atan2(pos.y - m.y, pos.x - m.x);
-          m.angle = ang;
-          playChime(440, 0.08);
+          m.angle = Math.atan2(pos.y - m.y, pos.x - m.x);
+          playTone(580, 0.06, 'sine', 0.15);
           break;
         }
       }
@@ -473,7 +490,6 @@
     window.addEventListener('pointermove', (e) => {
       if (!isRotating || !selectedMirror) return;
       const pos = getPointerPos(e);
-      // Smoothly rotate mirror to face pointer
       selectedMirror.angle = Math.atan2(pos.y - selectedMirror.y, pos.x - selectedMirror.x);
     });
 
@@ -482,18 +498,16 @@
       selectedMirror = null;
     });
 
-    // Optical Ray-Tracing Physics Engine
+    // Optical Calculation
     function calculateOptics() {
       activeRayPaths = [];
       totalBounces = 0;
       if (!currentLevel) return;
 
-      // Reset receptor charging
       currentLevel.receptors.forEach(r => {
-        r.charged = Math.max(0, r.charged - 0.05);
+        r.charged = Math.max(0, r.charged - 0.04);
       });
 
-      // Trace Laser Beam
       let curX = currentLevel.laser.x;
       let curY = currentLevel.laser.y;
       let curVx = Math.cos(currentLevel.laser.angle);
@@ -503,7 +517,7 @@
       let rayPoints = [{ x: curX, y: curY }];
 
       for (let b = 0; b < maxBounces; b++) {
-        const rayLen = 1200;
+        const rayLen = 1400;
         const targetX = curX + curVx * rayLen;
         const targetY = curY + curVy * rayLen;
 
@@ -511,14 +525,13 @@
         let hitDist = Infinity;
         let hitType = null;
         let hitNormal = null;
-        let hitTarget = null;
 
-        // Check Wall Boundaries
+        // Walls
         const walls = [
-          { x1: 0, y1: 0, x2: W, y2: 0, nx: 0, ny: 1 },
-          { x1: W, y1: 0, x2: W, y2: H, nx: -1, ny: 0 },
-          { x1: 0, y1: H, x2: W, y2: H, nx: 0, ny: -1 },
-          { x1: 0, y1: 0, x2: 0, y2: H, nx: 1, ny: 0 }
+          { x1: 10, y1: 10, x2: W - 10, y2: 10 },
+          { x1: W - 10, y1: 10, x2: W - 10, y2: H - 10 },
+          { x1: 10, y1: H - 10, x2: W - 10, y2: H - 10 },
+          { x1: 10, y1: 10, x2: 10, y2: H - 10 }
         ];
         for (let w of walls) {
           const hit = lineIntersection(curX, curY, targetX, targetY, w.x1, w.y1, w.x2, w.y2);
@@ -532,7 +545,7 @@
           }
         }
 
-        // Check Barriers (Opaque Obstacles)
+        // Barriers
         for (let bar of currentLevel.barriers) {
           const hit = lineIntersection(curX, curY, targetX, targetY, bar.x1, bar.y1, bar.x2, bar.y2);
           if (hit) {
@@ -545,7 +558,7 @@
           }
         }
 
-        // Check Mirrors
+        // Mirrors
         for (let m of currentLevel.mirrors) {
           const half = m.length / 2;
           const mx1 = m.x - Math.cos(m.angle) * half;
@@ -560,9 +573,7 @@
               hitDist = d;
               closestHit = hit;
               hitType = 'mirror';
-              hitTarget = m;
 
-              // Normal perpendicular to mirror surface: (-dy, dx)
               const dx = mx2 - mx1;
               const dy = my2 - my1;
               const len = Math.hypot(dx, dy);
@@ -571,9 +582,8 @@
           }
         }
 
-        // Check Photonic Receptors
+        // Receptors
         for (let r of currentLevel.receptors) {
-          // Circle intersection approximation
           const toCircX = r.x - curX;
           const toCircY = r.y - curY;
           const proj = toCircX * curVx + toCircY * curVy;
@@ -582,7 +592,7 @@
             const closeY = curY + curVy * proj;
             const distToCent = Math.hypot(closeX - r.x, closeY - r.y);
             if (distToCent < r.radius) {
-              r.charged = Math.min(1.0, r.charged + 0.12);
+              r.charged = Math.min(1.0, r.charged + 0.14);
               closestHit = { x: closeX, y: closeY };
               hitDist = proj;
               hitType = 'receptor';
@@ -596,15 +606,12 @@
           totalBounces++;
 
           if (hitType === 'mirror' && hitNormal) {
-            // Law of Reflection: R = D - 2*(D dot N)*N
             const dot = curVx * hitNormal.x + curVy * hitNormal.y;
             curVx = curVx - 2 * dot * hitNormal.x;
             curVy = curVy - 2 * dot * hitNormal.y;
-            // Advance slightly along reflection to prevent self-intersection
-            curX = closestHit.x + curVx * 0.1;
-            curY = closestHit.y + curVy * 0.1;
+            curX = closestHit.x + curVx * 0.15;
+            curY = closestHit.y + curVy * 0.15;
           } else {
-            // Beam absorbed by wall, barrier, or receptor
             break;
           }
         } else {
@@ -614,9 +621,8 @@
       }
 
       activeRayPaths.push(rayPoints);
-      bounceCount.innerText = totalBounces + ' Bounces';
+      bounceCount.innerText = totalBounces + ' BOUNCES';
 
-      // Evaluate Solved State
       const allCharged = currentLevel.receptors.every(r => r.charged >= 0.95);
       const avgCharged = currentLevel.receptors.reduce((a, b) => a + b.charged, 0) / currentLevel.receptors.length;
       fluxPercent.innerText = Math.round(avgCharged * 100) + '%';
@@ -628,22 +634,22 @@
       }
     }
 
-    // Canvas Rendering
+    // Precision Industrial Rendering
     function render() {
-      // Dark Slate Optical Breadboard Table
-      ctx.fillStyle = '#0b0f19';
+      // Optical Bench Surface
+      ctx.fillStyle = '#111317';
       ctx.fillRect(0, 0, W, H);
 
-      // Precision Grid (Laboratory Millimeter Markings)
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      // Calibrated Millimeter Crosshair Grid
+      ctx.strokeStyle = '#1b1f28';
       ctx.lineWidth = 1;
-      for (let x = 0; x < W; x += 30) {
+      for (let x = 0; x < W; x += 32) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, H);
         ctx.stroke();
       }
-      for (let y = 0; y < H; y += 30) {
+      for (let y = 0; y < H; y += 32) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(W, y);
@@ -652,44 +658,53 @@
 
       if (!currentLevel) return;
 
-      // Draw Barriers (Opaque Black Blocks)
+      // Draw Machined Tungsten Barriers
       for (let bar of currentLevel.barriers) {
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 8;
-        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#383e4c';
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'butt';
         ctx.beginPath();
         ctx.moveTo(bar.x1, bar.y1);
         ctx.lineTo(bar.x2, bar.y2);
         ctx.stroke();
+
+        ctx.strokeStyle = '#1e222a';
+        ctx.lineWidth = 4;
+        ctx.stroke();
       }
 
-      // Draw Photonic Receptors
+      // Draw Photodiode Receptors
       for (let r of currentLevel.receptors) {
         ctx.save();
         ctx.translate(r.x, r.y);
 
-        // Receptor Housing
-        ctx.fillStyle = '#1e293b';
+        // Machined Housing
+        ctx.fillStyle = '#1c202a';
         ctx.beginPath();
-        ctx.arc(0, 0, r.radius, 0, Math.PI * 2);
+        ctx.arc(0, 0, r.radius + 2, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = r.charged > 0.8 ? '#10b981' : '#64748b';
-        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#32394a';
+        ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Charge Progress Ring
-        ctx.strokeStyle = '#10b981';
+        // 360-degree Segmented Charge Ring
+        ctx.strokeStyle = r.charged > 0.8 ? '#10b981' : '#334155';
         ctx.lineWidth = 3.5;
         ctx.beginPath();
-        ctx.arc(0, 0, r.radius + 3, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * r.charged));
+        ctx.arc(0, 0, r.radius, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * r.charged));
         ctx.stroke();
 
-        // Photonic Core Glow
+        // Active Optical Core
         if (r.charged > 0.1) {
-          ctx.fillStyle = `rgba(16, 185, 129, ${r.charged * 0.8})`;
+          ctx.fillStyle = `rgba(16, 185, 129, ${r.charged * 0.9})`;
           ctx.shadowColor = '#10b981';
           ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.arc(0, 0, r.radius * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = '#0f172a';
           ctx.beginPath();
           ctx.arc(0, 0, r.radius * 0.6, 0, Math.PI * 2);
           ctx.fill();
@@ -698,87 +713,98 @@
         ctx.restore();
       }
 
-      // Draw Laser Emitter
+      // Draw Industrial He-Ne Laser Emitter
       ctx.save();
       const laser = currentLevel.laser;
       ctx.translate(laser.x, laser.y);
       ctx.rotate(laser.angle);
 
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(-18, -12, 36, 24);
+      // Machined chassis
+      ctx.fillStyle = '#1e222b';
+      ctx.fillRect(-22, -14, 44, 28);
+      ctx.strokeStyle = '#3a4254';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-22, -14, 44, 28);
 
-      ctx.fillStyle = '#38bdf8';
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 12;
-      ctx.fillRect(18, -4, 6, 8);
+      // Warning hazard stripe on laser
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(-18, -12, 6, 24);
+
+      // Lens Barrel Aperture
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(22, -5, 6, 10);
+      ctx.fillStyle = '#ff3366';
+      ctx.shadowColor = '#ff3366';
+      ctx.shadowBlur = 14;
+      ctx.fillRect(26, -3, 3, 6);
       ctx.restore();
 
-      // Draw Laser Beams (Photonic Bloom using 'lighter' blending)
+      // Draw High-Intensity Ruby Laser Beam (Lighter composite bloom)
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
 
       for (let path of activeRayPaths) {
         if (path.length < 2) continue;
 
-        // Outer Luminous Glow
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
-        ctx.lineWidth = 8;
+        // Outer Crimson Bloom
+        ctx.strokeStyle = 'rgba(255, 51, 102, 0.4)';
+        ctx.lineWidth = 9;
         ctx.beginPath();
         ctx.moveTo(path[0].x, path[0].y);
         for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
         ctx.stroke();
 
-        // Mid Photonic Core
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+        // Intense Ruby Core
+        ctx.strokeStyle = '#ff3366';
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        // Ultra Bright Photon Centerline
+        // White-hot photon center
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.2;
         ctx.stroke();
       }
       ctx.restore();
 
-      // Draw Optical Mirrors (High-Precision Mounts)
+      // Draw Optical Mirrors (High-Precision Brass & Silver Mounts)
       for (let m of currentLevel.mirrors) {
         ctx.save();
         ctx.translate(m.x, m.y);
 
-        // Circular Touch Rotation Ring (Gizmo)
-        ctx.strokeStyle = selectedMirror === m ? 'rgba(56, 189, 248, 0.5)' : 'rgba(255, 255, 255, 0.1)';
+        // Calibrated Degree Rotation Ring
+        ctx.strokeStyle = selectedMirror === m ? 'rgba(255, 51, 102, 0.6)' : 'rgba(255, 255, 255, 0.12)';
         ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 5]);
+        ctx.setLineDash([2, 4]);
         ctx.beginPath();
-        ctx.arc(0, 0, m.length / 2 + 8, 0, Math.PI * 2);
+        ctx.arc(0, 0, m.length / 2 + 10, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Angle indicator degrees readout
+        // Degree Readout
         if (selectedMirror === m) {
-          ctx.fillStyle = '#38bdf8';
+          ctx.fillStyle = '#ff3366';
           ctx.font = '700 11px monospace';
           ctx.textAlign = 'center';
           const deg = Math.round(((m.angle * 180 / Math.PI) % 360 + 360) % 360);
-          ctx.fillText(`θ = ${deg}°`, 0, -m.length / 2 - 14);
+          ctx.fillText(`&theta; = ${deg}&deg;`, 0, -m.length / 2 - 16);
         }
 
         ctx.rotate(m.angle);
 
-        // Mirror Backing Support
-        ctx.fillStyle = '#1e293b';
+        // Mirror Anodized Backing
+        ctx.fillStyle = '#222631';
         ctx.fillRect(-m.length / 2, 2, m.length, 5);
 
-        // Reflective Silvered Surface
-        ctx.fillStyle = '#e2e8f0';
+        // Reflective Silver Optical Surface
+        ctx.fillStyle = '#f1f5f9';
         ctx.shadowColor = '#ffffff';
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 8;
         ctx.fillRect(-m.length / 2, -2, m.length, 4);
 
-        // Pivot Center Pin
-        ctx.fillStyle = '#38bdf8';
+        // Brass Pivot Bolt
+        ctx.fillStyle = '#eab308';
         ctx.beginPath();
-        ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
