@@ -349,7 +349,7 @@
     }
 
     // Geometry Helpers: Line segment intersection & Vector reflection
-    function lineIntersection(x1, y1, x2, y2, x3, y4, x4, y4) {
+    function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
       const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
       if (Math.abs(denom) < 0.0001) return null; // parallel
 
