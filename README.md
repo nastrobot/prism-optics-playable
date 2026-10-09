@@ -2,6 +2,9 @@
 
 A high-precision optical physics laboratory and vector ray-tracing puzzle engine built with **HTML5 Canvas 2D** and the **Web Audio API**.
 
+### 🕹️ [▶ Play Live in Browser (Interactive Demo)](https://nastrobot.github.io/prism-optics-playable/)
+*(Zero installation required • Locked 60 FPS • Mobile Touch & Desktop Supported)*
+
 ---
 
 ## 📐 Mathematical & Physics Engine
