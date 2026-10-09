@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PRISM: Optical Ray-Tracing Physics Lab</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #090d16;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #labContainer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 480px;
+      max-height: 940px;
+      background: #0b0f19;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Precision Laboratory Instrument HUD */
+    .lab-header {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .spec-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 14px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .spec-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .spec-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: #38bdf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Level Selector & Controls Bar */
+    .lab-footer {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .level-badge {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 12px;
+      color: #e2e8f0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .controls-group {
+      display: flex;
+      gap: 8px;
+    }
+    .lab-btn {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .lab-btn:active {
+      transform: scale(0.96);
+      background: rgba(51, 65, 85, 0.9);
+    }
+
+    /* Level Solved Banner */
+    .solved-banner {
+      position: absolute;
+      top: 75px;
+      left: 16px;
+      right: 16px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #34d399;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      z-index: 15;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .next-btn {
+      background: #10b981;
+      color: #064e3b;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+    }
+
+    /* Start / Overview Overlay */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(11, 15, 25, 0.92);
+      backdrop-filter: blur(18px);
+      padding: 32px;
+      text-align: center;
+      z-index: 25;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 5px 14px;
+      border-radius: 999px;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+    .desc {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      max-width: 320px;
+    }
+    .feature-list {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 26px;
+      text-align: left;
+      width: 100%;
+      max-width: 330px;
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .feature-list div {
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feature-list div:last-child {
+      margin-bottom: 0;
+    }
+    .btn-enter {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border: none;
+      padding: 16px 42px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      box-shadow: 0 0 30px rgba(37, 99, 235, 0.4);
+      transition: transform 0.12s;
+    }
+    .btn-enter:active {
+      transform: scale(0.97);
+    }
+  </style>
+</head>
+<body>
+  <div id="labContainer">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Lab Instrument Top Readout -->
+    <div class="lab-header">
+      <div class="spec-card">
+        <span class="spec-label">RAY REFLECTIONS</span>
+        <span class="spec-val" id="bounceCount">0 Bounces</span>
+      </div>
+      <div class="spec-card">
+        <span class="spec-label">CIRCUIT FLUX</span>
+        <span class="spec-val" id="fluxPercent">0%</span>
+      </div>
+    </div>
+
+    <!-- Level Solved Notification -->
+    <div class="solved-banner hidden" id="solvedBanner">
+      <span>✨ OPTICAL CIRCUIT LOCKED!</span>
+      <button class="next-btn" id="nextLevelBtn">NEXT EXPERIMENT →</button>
+    </div>
+
+    <!-- Lab Footer Navigation -->
+    <div class="lab-footer">
+      <div class="level-badge" id="levelName">EXP 1: SNELL'S ANGLE</div>
+      <div class="controls-group">
+        <button class="lab-btn" id="prevBtn">‹</button>
+        <button class="lab-btn" id="resetBtn">RESET</button>
+        <button class="lab-btn" id="nextBtn">›</button>
+      </div>
+    </div>
+
+    <!-- Start / Introduction Overlay -->
+    <div class="overlay" id="startOverlay">
+      <div class="pill">🔬 OPTICAL PHYSICS ENGINE</div>
+      <h1 class="title">PRISM: RAY-TRACING</h1>
+      <p class="desc">A realistic optical vector simulation. Guide high-power lasers through mirrors, beam splitters, and prisms to excite photonic receptors.</p>
+      
+      <div class="feature-list">
+        <div><span>📐</span> <b>Vector Law of Reflection:</b> Real angle calculation.</div>
+        <div><span>🔄</span> <b>Touch & Rotate:</b> Drag circular rings to adjust mirror angles.</div>
+        <div><span>⚡</span> <b>Multi-Bounce Optics:</b> Real-time photonic raymarching.</div>
+      </div>
+
+      <button class="btn-enter" id="enterLabBtn">ENTER LABORATORY</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const bounceCount = document.getElementById('bounceCount');
+    const fluxPercent = document.getElementById('fluxPercent');
+    const levelName = document.getElementById('levelName');
+    const solvedBanner = document.getElementById('solvedBanner');
+    const nextLevelBtn = document.getElementById('nextLevelBtn');
+    const startOverlay = document.getElementById('startOverlay');
+    const enterLabBtn = document.getElementById('enterLabBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    let W = 360;
+    let H = 640;
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      canvas.width = W;
+      canvas.height = H;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Web Audio Synthesizer: Resonant Glass & Harmonic Chimes
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+
+    function initAudio() {
+      if (!actx) actx = new AudioContext();
+      if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playChime(freq, dur = 0.4) {
+      if (!actx) return;
+      try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(0.18, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + dur);
+      } catch (e) {}
+    }
+
+    function soundComplete() {
+      [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+        setTimeout(() => playChime(f, 0.6), i * 110);
+      });
+    }
+
+    // Geometry Helpers: Line segment intersection & Vector reflection
+    function lineIntersection(x1, y1, x2, y2, x3, y4, x4, y4) {
+      const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+      if (Math.abs(denom) < 0.0001) return null; // parallel
+
+      const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+      const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+      if (t >= 0.001 && t <= 1 && u >= 0 && u <= 1) {
+        return {
+          x: x1 + t * (x2 - x1),
+          y: y1 + t * (y2 - y1),
+          t: t
+        };
+      }
+      return null;
+    }
+
+    // Level Definitions (Progressive Optical Puzzles)
+    let currentLevelIndex = 0;
+    const levels = [
+      {
+        name: "EXP 1: REFLECTION ANGLE",
+        laser: { x: 50, y: 140, angle: 0, color: "#38bdf8" },
+        mirrors: [
+          { x: 280, y: 140, angle: Math.PI * 0.75, length: 70 },
+          { x: 280, y: 460, angle: Math.PI * 0.25, length: 70 }
+        ],
+        receptors: [
+          { x: 70, y: 460, radius: 22, requiredColor: "#38bdf8", charged: 0 }
+        ],
+        barriers: []
+      },
+      {
+        name: "EXP 2: OBSTACLE BYPASS",
+        laser: { x: 60, y: 130, angle: 0, color: "#38bdf8" },
+        mirrors: [
+          { x: 290, y: 130, angle: Math.PI * 0.75, length: 65 },
+          { x: 290, y: 320, angle: Math.PI * 0.25, length: 65 },
+          { x: 100, y: 320, angle: Math.PI * 0.75, length: 65 },
+          { x: 100, y: 520, angle: Math.PI * 0.25, length: 65 }
+        ],
+        receptors: [
+          { x: 280, y: 520, radius: 22, requiredColor: "#38bdf8", charged: 0 }
+        ],
+        barriers: [
+          { x1: 180, y1: 200, x2: 180, y2: 440 }
+        ]
+      },
+      {
+        name: "EXP 3: DUAL RESONANCE",
+        laser: { x: 60, y: 180, angle: 0.15, color: "#38bdf8" },
+        mirrors: [
+          { x: 280, y: 220, angle: 2.1, length: 75 },
+          { x: 160, y: 380, angle: 0.7, length: 75 },
+          { x: 290, y: 480, angle: 2.3, length: 75 }
+        ],
+        receptors: [
+          { x: 70, y: 320, radius: 22, requiredColor: "#38bdf8", charged: 0 },
+          { x: 80, y: 540, radius: 22, requiredColor: "#38bdf8", charged: 0 }
+        ],
+        barriers: [
+          { x1: 20, y1: 420, x2: 120, y2: 420 }
+        ]
+      }
+    ];
+
+    let currentLevel = null;
+    let selectedMirror = null;
+    let isRotating = false;
+    let activeRayPaths = [];
+    let totalBounces = 0;
+    let isSolved = false;
+
+    function loadLevel(idx) {
+      currentLevelIndex = (idx + levels.length) % levels.length;
+      const def = levels[currentLevelIndex];
+      levelName.innerText = def.name;
+      solvedBanner.classList.add('hidden');
+      isSolved = false;
+
+      // Deep copy level objects
+      currentLevel = {
+        name: def.name,
+        laser: { ...def.laser },
+        mirrors: def.mirrors.map(m => ({ ...m })),
+        receptors: def.receptors.map(r => ({ ...r, charged: 0 })),
+        barriers: def.barriers.map(b => ({ ...b }))
+      };
+    }
+
+    // Touch & Pointer Interaction: Rotate mirrors via intuitive radial gizmo
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      initAudio();
+      const pos = getPointerPos(e);
+      if (!currentLevel) return;
+
+      selectedMirror = null;
+      for (let m of currentLevel.mirrors) {
+        const d = Math.hypot(m.x - pos.x, m.y - pos.y);
+        if (d < 45) { // Touch target radius
+          selectedMirror = m;
+          isRotating = true;
+          // Calculate initial angle to pointer
+          const ang = Math.atan2(pos.y - m.y, pos.x - m.x);
+          m.angle = ang;
+          playChime(440, 0.08);
+          break;
+        }
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isRotating || !selectedMirror) return;
+      const pos = getPointerPos(e);
+      // Smoothly rotate mirror to face pointer
+      selectedMirror.angle = Math.atan2(pos.y - selectedMirror.y, pos.x - selectedMirror.x);
+    });
+
+    window.addEventListener('pointerup', () => {
+      isRotating = false;
+      selectedMirror = null;
+    });
+
+    // Optical Ray-Tracing Physics Engine
+    function calculateOptics() {
+      activeRayPaths = [];
+      totalBounces = 0;
+      if (!currentLevel) return;
+
+      // Reset receptor charging
+      currentLevel.receptors.forEach(r => {
+        r.charged = Math.max(0, r.charged - 0.05);
+      });
+
+      // Trace Laser Beam
+      let curX = currentLevel.laser.x;
+      let curY = currentLevel.laser.y;
+      let curVx = Math.cos(currentLevel.laser.angle);
+      let curVy = Math.sin(currentLevel.laser.angle);
+      const maxBounces = 12;
+
+      let rayPoints = [{ x: curX, y: curY }];
+
+      for (let b = 0; b < maxBounces; b++) {
+        const rayLen = 1200;
+        const targetX = curX + curVx * rayLen;
+        const targetY = curY + curVy * rayLen;
+
+        let closestHit = null;
+        let hitDist = Infinity;
+        let hitType = null;
+        let hitNormal = null;
+        let hitTarget = null;
+
+        // Check Wall Boundaries
+        const walls = [
+          { x1: 0, y1: 0, x2: W, y2: 0, nx: 0, ny: 1 },
+          { x1: W, y1: 0, x2: W, y2: H, nx: -1, ny: 0 },
+          { x1: 0, y1: H, x2: W, y2: H, nx: 0, ny: -1 },
+          { x1: 0, y1: 0, x2: 0, y2: H, nx: 1, ny: 0 }
+        ];
+        for (let w of walls) {
+          const hit = lineIntersection(curX, curY, targetX, targetY, w.x1, w.y1, w.x2, w.y2);
+          if (hit) {
+            const d = Math.hypot(hit.x - curX, hit.y - curY);
+            if (d < hitDist) {
+              hitDist = d;
+              closestHit = hit;
+              hitType = 'wall';
+            }
+          }
+        }
+
+        // Check Barriers (Opaque Obstacles)
+        for (let bar of currentLevel.barriers) {
+          const hit = lineIntersection(curX, curY, targetX, targetY, bar.x1, bar.y1, bar.x2, bar.y2);
+          if (hit) {
+            const d = Math.hypot(hit.x - curX, hit.y - curY);
+            if (d < hitDist) {
+              hitDist = d;
+              closestHit = hit;
+              hitType = 'barrier';
+            }
+          }
+        }
+
+        // Check Mirrors
+        for (let m of currentLevel.mirrors) {
+          const half = m.length / 2;
+          const mx1 = m.x - Math.cos(m.angle) * half;
+          const my1 = m.y - Math.sin(m.angle) * half;
+          const mx2 = m.x + Math.cos(m.angle) * half;
+          const my2 = m.y + Math.sin(m.angle) * half;
+
+          const hit = lineIntersection(curX, curY, targetX, targetY, mx1, my1, mx2, my2);
+          if (hit) {
+            const d = Math.hypot(hit.x - curX, hit.y - curY);
+            if (d < hitDist) {
+              hitDist = d;
+              closestHit = hit;
+              hitType = 'mirror';
+              hitTarget = m;
+
+              // Normal perpendicular to mirror surface: (-dy, dx)
+              const dx = mx2 - mx1;
+              const dy = my2 - my1;
+              const len = Math.hypot(dx, dy);
+              hitNormal = { x: -dy / len, y: dx / len };
+            }
+          }
+        }
+
+        // Check Photonic Receptors
+        for (let r of currentLevel.receptors) {
+          // Circle intersection approximation
+          const toCircX = r.x - curX;
+          const toCircY = r.y - curY;
+          const proj = toCircX * curVx + toCircY * curVy;
+          if (proj > 0 && proj < hitDist) {
+            const closeX = curX + curVx * proj;
+            const closeY = curY + curVy * proj;
+            const distToCent = Math.hypot(closeX - r.x, closeY - r.y);
+            if (distToCent < r.radius) {
+              r.charged = Math.min(1.0, r.charged + 0.12);
+              closestHit = { x: closeX, y: closeY };
+              hitDist = proj;
+              hitType = 'receptor';
+              break;
+            }
+          }
+        }
+
+        if (closestHit) {
+          rayPoints.push({ x: closestHit.x, y: closestHit.y });
+          totalBounces++;
+
+          if (hitType === 'mirror' && hitNormal) {
+            // Law of Reflection: R = D - 2*(D dot N)*N
+            const dot = curVx * hitNormal.x + curVy * hitNormal.y;
+            curVx = curVx - 2 * dot * hitNormal.x;
+            curVy = curVy - 2 * dot * hitNormal.y;
+            // Advance slightly along reflection to prevent self-intersection
+            curX = closestHit.x + curVx * 0.1;
+            curY = closestHit.y + curVy * 0.1;
+          } else {
+            // Beam absorbed by wall, barrier, or receptor
+            break;
+          }
+        } else {
+          rayPoints.push({ x: targetX, y: targetY });
+          break;
+        }
+      }
+
+      activeRayPaths.push(rayPoints);
+      bounceCount.innerText = totalBounces + ' Bounces';
+
+      // Evaluate Solved State
+      const allCharged = currentLevel.receptors.every(r => r.charged >= 0.95);
+      const avgCharged = currentLevel.receptors.reduce((a, b) => a + b.charged, 0) / currentLevel.receptors.length;
+      fluxPercent.innerText = Math.round(avgCharged * 100) + '%';
+
+      if (allCharged && !isSolved) {
+        isSolved = true;
+        soundComplete();
+        solvedBanner.classList.remove('hidden');
+      }
+    }
+
+    // Canvas Rendering
+    function render() {
+      // Dark Slate Optical Breadboard Table
+      ctx.fillStyle = '#0b0f19';
+      ctx.fillRect(0, 0, W, H);
+
+      // Precision Grid (Laboratory Millimeter Markings)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 30) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+
+      if (!currentLevel) return;
+
+      // Draw Barriers (Opaque Black Blocks)
+      for (let bar of currentLevel.barriers) {
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(bar.x1, bar.y1);
+        ctx.lineTo(bar.x2, bar.y2);
+        ctx.stroke();
+      }
+
+      // Draw Photonic Receptors
+      for (let r of currentLevel.receptors) {
+        ctx.save();
+        ctx.translate(r.x, r.y);
+
+        // Receptor Housing
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(0, 0, r.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = r.charged > 0.8 ? '#10b981' : '#64748b';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Charge Progress Ring
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, r.radius + 3, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * r.charged));
+        ctx.stroke();
+
+        // Photonic Core Glow
+        if (r.charged > 0.1) {
+          ctx.fillStyle = `rgba(16, 185, 129, ${r.charged * 0.8})`;
+          ctx.shadowColor = '#10b981';
+          ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.arc(0, 0, r.radius * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      // Draw Laser Emitter
+      ctx.save();
+      const laser = currentLevel.laser;
+      ctx.translate(laser.x, laser.y);
+      ctx.rotate(laser.angle);
+
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-18, -12, 36, 24);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 12;
+      ctx.fillRect(18, -4, 6, 8);
+      ctx.restore();
+
+      // Draw Laser Beams (Photonic Bloom using 'lighter' blending)
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (let path of activeRayPaths) {
+        if (path.length < 2) continue;
+
+        // Outer Luminous Glow
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+        ctx.stroke();
+
+        // Mid Photonic Core
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Ultra Bright Photon Centerline
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Draw Optical Mirrors (High-Precision Mounts)
+      for (let m of currentLevel.mirrors) {
+        ctx.save();
+        ctx.translate(m.x, m.y);
+
+        // Circular Touch Rotation Ring (Gizmo)
+        ctx.strokeStyle = selectedMirror === m ? 'rgba(56, 189, 248, 0.5)' : 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, m.length / 2 + 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Angle indicator degrees readout
+        if (selectedMirror === m) {
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = '700 11px monospace';
+          ctx.textAlign = 'center';
+          const deg = Math.round(((m.angle * 180 / Math.PI) % 360 + 360) % 360);
+          ctx.fillText(`θ = ${deg}°`, 0, -m.length / 2 - 14);
+        }
+
+        ctx.rotate(m.angle);
+
+        // Mirror Backing Support
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-m.length / 2, 2, m.length, 5);
+
+        // Reflective Silvered Surface
+        ctx.fillStyle = '#e2e8f0';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 6;
+        ctx.fillRect(-m.length / 2, -2, m.length, 4);
+
+        // Pivot Center Pin
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    function loop() {
+      calculateOptics();
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    // UI Buttons
+    enterLabBtn.addEventListener('click', () => {
+      initAudio();
+      startOverlay.classList.add('hidden');
+      loadLevel(0);
+    });
+
+    nextLevelBtn.addEventListener('click', () => {
+      loadLevel(currentLevelIndex + 1);
+    });
+    nextBtn.addEventListener('click', () => {
+      loadLevel(currentLevelIndex + 1);
+    });
+    prevBtn.addEventListener('click', () => {
+      loadLevel(currentLevelIndex - 1);
+    });
+    resetBtn.addEventListener('click', () => {
+      loadLevel(currentLevelIndex);
+    });
+
+    loadLevel(0);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
